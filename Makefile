@@ -1,6 +1,6 @@
 CXX=g++
 
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g
 CXXFLAGS += -I ./include
 
 SRCS=main.cpp
