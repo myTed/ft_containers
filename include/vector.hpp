@@ -12,6 +12,7 @@
 #include "is_iterator.hpp"
 #include "iterator_traits.hpp"
 #include "equal.hpp"
+#include "reverse_iterator.hpp"
 
 namespace ft {
 template<typename T, typename Alloc = std::allocator<T> >
@@ -26,9 +27,9 @@ public:
 	typedef		typename	allocator_type::const_pointer 						const_pointer;
 	typedef		Vector_iterator<T>												iterator;
 	typedef		const Vector_iterator<T>										const_iterator;
-	typedef		std::reverse_iterator<iterator>									reverse_iterator;
-	typedef		std::reverse_iterator<const_iterator>							const_reverse_iterator;
-	typedef		typename	std::iterator_traits<iterator>::difference_type		difference_type;
+	typedef		ft::reverse_iterator<iterator>									reverse_iterator;
+	typedef		ft::reverse_iterator<const_iterator>							const_reverse_iterator;
+	typedef		typename	ft::iterator_traits<iterator>::difference_type		difference_type;
 	typedef		size_t															size_type;
 private:
 	allocator_type																_alloc;
@@ -38,16 +39,27 @@ private:
 private:
 	void	allocateFromRef(allocator_type& alloc, size_type n, const vector& rV);
 	void	allocateFromVal(allocator_type& alloc, size_type n, const value_type& val);
+	void	reserve_copy(iterator position, size_type newCapacity,  size_type n, const value_type& val);
+	template<typename InputIterator>
+	typename ft::enable_if< ft::is_inputable_iterator<InputIterator>::value, void>::type
+	reserve_copy_iter(iterator position, size_type newCapacity, InputIterator first, InputIterator last);
+
 public:
 	/*constructor*/
 	explicit	vector(const allocator_type& alloc = allocator_type());
 	explicit	vector(size_type n, const value_type& val = value_type(),
 						const allocator_type& alloc = allocator_type());
+
+	template<typename InputIterator>
+				vector(InputIterator first, InputIterator last,
+						const allocator_type& alloc = allocator_type(),
+						typename ft::enable_if< ft::is_inputable_iterator<InputIterator>::value, void*>::type last_tmp = 0);
+
 	vector(const vector& rV);
-	/*copy operator*/
+
 	vector& operator=(const vector& rV);
 	/*destructor*/
-	//~vector();
+	~vector();
 
 	/*iterators*/
 	iterator 				begin();
@@ -136,6 +148,28 @@ vector<T, Alloc>::vector(
 		std::cout << e.what() << std::endl;
 		throw ;
 	}
+}
+template<typename T, typename Alloc>
+template<typename InputIterator>
+vector<T, Alloc>::vector(InputIterator first, InputIterator last,
+						const allocator_type& alloc,
+						typename ft::enable_if< ft::is_inputable_iterator<InputIterator>::value, void*>::type tmp)
+	: _alloc(alloc)
+{
+	static_cast<void>(tmp);
+	difference_type dist = std::distance(first, last);
+	_pElem = _alloc.allocate(dist);
+	std::uninitialized_copy(first, last, _pElem);
+	_elemCnt = dist;
+	_capacity = dist;
+}
+
+template<typename T, typename Alloc>
+vector<T, Alloc>::~vector()
+{
+	for(size_type idx = 0; idx < _elemCnt; ++idx)
+		_alloc.destroy(&_pElem[idx]);
+	_alloc.deallocate(_pElem, _capacity);
 }
 
 template<typename T, typename Alloc>
@@ -478,41 +512,89 @@ vector<T, Alloc>::pop_back()
 	--_elemCnt;
 }
 
+
+template<typename T, typename Alloc>
+void
+vector<T, Alloc>::reserve_copy(iterator position, size_type newCapacity,  size_type n, const value_type& val)
+{
+	//strong gurantee
+	if (newCapacity > max_size())
+		throw std::length_error("overed length alloc");
+	T* tmp = _alloc.allocate(newCapacity);
+	try {
+		difference_type dist = std::distance(begin(), position);
+		std::uninitialized_fill_n(tmp + dist, n, val);
+		std::uninitialized_copy(begin(), position, tmp);
+		std::uninitialized_copy(position, end(), tmp + dist + n);
+	}
+	catch(std::exception& e)
+	{
+		_alloc.deallocate(tmp, newCapacity);
+	}
+	for(size_type idx = 0; idx < _elemCnt; ++idx)
+		_alloc.destroy(&_pElem[idx]);
+	_alloc.deallocate(_pElem, _capacity);
+	_pElem = tmp;
+	_elemCnt += n;
+	_capacity = newCapacity;
+}
+
+template<typename T, typename Alloc>
+template<typename InputIterator>
+typename ft::enable_if< ft::is_inputable_iterator<InputIterator>::value, void>::type
+vector<T, Alloc>::reserve_copy_iter(iterator position, size_type newCapacity, InputIterator first, InputIterator last)
+{
+	//strong gurantee
+	if (newCapacity > max_size())
+		throw std::length_error("overed length alloc");
+	T* tmp = _alloc.allocate(newCapacity);
+	difference_type dist = std::distance(position, end());
+	try{
+		std::uninitialized_copy(first, last, tmp + std::distance(begin(), position));
+		std::uninitialized_copy(begin(), position, tmp);
+		std::uninitialized_copy(position, end(), tmp + std::distance(begin(), position) + dist);
+	}
+	catch(std::exception& e)
+	{
+		_alloc.deallocate(tmp, newCapacity);
+	}
+	for (size_type idx = 0; idx < _elemCnt; ++idx)
+		_alloc.destroy(&_pElem[idx]);
+	_alloc.deallocate(_pElem, _capacity);
+	_pElem = tmp;
+	_elemCnt += dist;
+	_capacity = newCapacity;
+}
+
+
 template<typename T, typename Alloc>
 typename vector<T, Alloc>::iterator
 vector<T, Alloc>::insert(iterator position, const value_type& val)
 {
 	if (_elemCnt >= _capacity)
 	{
-		reserve(_elemCnt * 2);
 		if (position == end())
+		{
+			reserve(_elemCnt * 2);
 			push_back(val);
+		}
 		else
 		{
-			std::uninitialized_copy(position, end(), position + 1);
-			_alloc.construct(&(_pElem[position]), val);
-			_elemCnt++;
+			reserve_copy(position, 2 * _elemCnt, 1, val);
 		}
 		return (iterator(position));
 	}
 	if (position == end())
 	{
 		push_back(val);
-		_elemCnt++;
 		return (iterator(position));
 	}
-	try
-	{
-		std::uninitialized_copy(position, end(), position + 1);
-	}
-	catch(std::exception& e)
-	{
-		_elemCnt = std::distance(begin(), position);
-		throw ;
-	}
-	_alloc.destroy(&_pElem[position]);
-	_alloc.construct(&(_pElem[position]), val);
-	_elemCnt++;
+	iterator lastElemPosition(end() - 1);
+	for (; lastElemPosition != position; --lastElemPosition)
+		*(lastElemPosition + 1) = *lastElemPosition;
+	*(lastElemPosition + 1) = *lastElemPosition;
+	_alloc.construct(&_pElem[std::distance(begin(), position)], val);
+	++_elemCnt;
 	return (iterator(position));
 }
 
@@ -520,22 +602,34 @@ template<typename T, typename Alloc>
 void
 vector<T, Alloc>::insert(iterator position, size_type n, const value_type& val)
 {
-	size_type dist = std::distance(position, end());
-	if (dist == 0)
-		return ;
-	if (_elemCnt + n > _capacity)
+	if (_elemCnt + n >= _capacity)
 	{
 		size_type _tmpCap = _capacity;
 		size_type _target = _capacity + n;
 		while (_tmpCap <= _target)
 			_tmpCap <<= 1;
-		reserve(_tmpCap);
-		std::uninitialized_copy(position, position + dist, end() - dist);
-		std::uninitialized_fill_n(position, n, val);
+		if (position == end())
+		{
+			reserve(_tmpCap);
+			std::uninitialized_fill_n(end(), n , val);
+			_elemCnt += n;
+			return ;
+		}
+		reserve_copy(position, _tmpCap, n, val);
 		return ;
 	}
-	std::uninitialized_copy(position, position + dist, end() - dist);
+	if (position == end())
+	{
+		std::uninitialized_fill_n(end(), n, val);
+		_elemCnt += n;
+		return ;
+	}
+	iterator lastElemPosition(end() - 1);
+	for (; lastElemPosition != position; --lastElemPosition)
+		*(lastElemPosition + n) = *lastElemPosition;
+	*(lastElemPosition + n) = *lastElemPosition;
 	std::uninitialized_fill_n(position, n, val);
+	_elemCnt += n;
 	return ;
 }
 
@@ -547,19 +641,34 @@ typename ft::enable_if< ft::is_inputable_iterator<InputIterator>::value, void>::
 	size_type dist = std::distance(first, last);
 	if (dist == 0)
 		return ;
-	if (_elemCnt + dist > _capacity)
+	if (_elemCnt + dist >= _capacity)
 	{
 		size_type	_tmpCap = _capacity;
 		size_type	_target = _capacity + dist;
 		while (_tmpCap <= _target)
 			_tmpCap <<= 1;
-		reserve(_tmpCap);
-		std::uninitialized_copy(position, position + dist, end() - dist);
-		std::uninitialized_copy(first, last, position);
+		if (position == end())
+		{
+			reserve(_tmpCap);
+			std::uninitialized_copy(first, last, end());
+			_elemCnt += dist;
+			return ;
+		}
+		reserve_copy_iter(position, _tmpCap, first, last);
 		return ;
 	}
-	std::uninitialized_copy(position, position + dist, end() - dist);
+	if (position == end())
+	{
+		std::uninitialized_copy(first, last, end());
+		_elemCnt += dist;
+		return ;
+	}
+	iterator lastElemPosition(end() - 1);
+	for (; lastElemPosition != position; --lastElemPosition)
+		*(lastElemPosition + dist) = *lastElemPosition;
+	*(lastElemPosition + dist) = *lastElemPosition;
 	std::uninitialized_copy(first, last, position);
+	_elemCnt += dist;
 	return ;
 }
 
@@ -573,7 +682,7 @@ vector<T, Alloc>::erase(iterator position)
 		pop_back();
 		return (iterator(end()));
 	}
-	_alloc.distroy(&(*position));
+	_alloc.destroy(&(*position));
 	std::uninitialized_copy(position + 1, end(), position);
 	--_elemCnt;
 	return (iterator(position));
@@ -586,11 +695,9 @@ vector<T, Alloc>::erase(iterator first, iterator last)
 	size_type dist = std::distance(first, last);
 	T* startAddr = &(*first);
 	for(size_type idx = 0; idx < dist; ++idx, ++startAddr)
-	{
-		_alloc.distroy(startAddr);
-		--_elemCnt;
-	}
-	std::uninitialized_copy(++last, end(), first);
+		_alloc.destroy(startAddr);
+	std::uninitialized_copy(last, end(), first);
+	_elemCnt -= dist;
 	return (first);
 }
 

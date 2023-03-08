@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 #include "is_iterator.hpp"
-
+#include "reverse_iterator.hpp"
 
 int	main(void)
 {
@@ -47,10 +47,6 @@ int	main(void)
 	ft::vector<int>::reverse_iterator rpos1(v5.begin());
 	ft::vector<int>::reverse_iterator rpos2(v5.end());
 
-	std::vector<int> myvector;
-
-	for (int i = 0; i <= 10; ++i)
-		myvector.push_back(i);
 
 	//myvector.erase(myvector.begin() + 5);
 
@@ -75,16 +71,54 @@ int	main(void)
 	kk.push_back(1);
 	kk.push_back(2);
 	kk.push_back(3);
-	
+	kk.push_back(4);
+	//kk.push_back(5);
 	for(ft::vector<int>::iterator it = kk.begin();  it != kk.end(); ++it)
 		std::cout << *it << std::endl;
 	
 	a.assign(kk.begin(), kk.end());
 	
 	for(ft::vector<int>::iterator it = a.begin();  it != a.end(); ++it)
-		std::cout << *it << std::endl;
+		std::cout << *it << " ";
+	std::cout << std::endl;
 	a.insert(a.end(), 10);
+	a.insert(a.begin() + 2, 4, 20);
+	for(ft::vector<int>::iterator it = a.begin();  it != a.end(); ++it)
+		std::cout << *it << " ";
+	std::cout << std::endl;
 
+	a.insert(a.end(), kk.begin(), kk.end());
+	for(ft::vector<int>::iterator it = a.begin();  it != a.end(); ++it)
+		std::cout << *it << " ";
+	std::cout << std::endl;
+
+	a.erase(a.begin() + 1, a.begin() + 4);
+for(ft::vector<int>::iterator it = a.begin();  it != a.end(); ++it)
+		std::cout << *it << " ";
+	std::cout << std::endl;
+
+
+	//a.assign(kk.begin(), kk.end());
+
+	ft::vector<int> tmp(a.begin(), a.end());
+
+	int	arr[] = {5,4,3,2,1};
+
+	ft::vector<int> tmp2(arr, arr + sizeof(arr) / sizeof(arr[0]));
+for(ft::vector<int>::iterator it = tmp2.begin();  it != tmp2.end(); ++it)
+		std::cout << *it << " ";
+	std::cout << std::endl;
+
+ 
+   ft::vector<int> myvector;
+  for (int i=0; i<10; i++) myvector.push_back(i);
+
+  ft::reverse_iterator<ft::vector<int>::iterator> from;
+  ft::reverse_iterator<ft::vector<int>::iterator> until;
+  from = myvector.rbegin();
+  until = myvector.rend();
+
+  std::cout << "myvector has " << (until-from) << " elements.\n";
 
 	//int	bb[] = {1,2,3,4,5};
 

@@ -24,9 +24,9 @@ public:
 	T&					operator*();
 	const T&			operator*() const; 
 	Vector_iterator&	operator+=(difference_type n);
-	Vector_iterator		operator+(difference_type n);
+	Vector_iterator		operator+(difference_type n) const;
 	Vector_iterator&	operator-=(difference_type n);
-	Vector_iterator		operator-(difference_type n);
+	Vector_iterator		operator-(difference_type n) const;
 	difference_type		operator-(const Vector_iterator& rV) const;
 	T&					operator[](difference_type n);
 	const T&			operator[](difference_type n) const;
@@ -124,7 +124,7 @@ Vector_iterator<T>::operator+=(difference_type n)
 	
 template <typename T>
 Vector_iterator<T> 
-Vector_iterator<T>::operator+(difference_type n)
+Vector_iterator<T>::operator+(difference_type n) const
 {
 	return (Vector_iterator(_p + n));
 }
@@ -140,7 +140,7 @@ Vector_iterator<T>::operator-=(difference_type n)
 
 template <typename T>
 Vector_iterator<T> 
-Vector_iterator<T>::operator-(difference_type n)
+Vector_iterator<T>::operator-(difference_type n) const
 {
 	return (Vector_iterator(_p - n));
 }
