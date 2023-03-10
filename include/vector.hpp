@@ -13,6 +13,7 @@
 #include "iterator_traits.hpp"
 #include "equal.hpp"
 #include "reverse_iterator.hpp"
+#include "vector_const_iterator.hpp"
 
 namespace ft {
 template<typename T, typename Alloc = std::allocator<T> >
@@ -26,7 +27,7 @@ public:
 	typedef		typename	allocator_type::pointer								pointer;
 	typedef		typename	allocator_type::const_pointer 						const_pointer;
 	typedef		Vector_iterator<T>												iterator;
-	typedef		const Vector_iterator<T>										const_iterator;
+	typedef		Vector_const_iterator<T>										const_iterator;
 	typedef		ft::reverse_iterator<iterator>									reverse_iterator;
 	typedef		ft::reverse_iterator<const_iterator>							const_reverse_iterator;
 	typedef		typename	ft::iterator_traits<iterator>::difference_type		difference_type;
@@ -37,8 +38,8 @@ private:
 	size_type																	_elemCnt;
 	size_type																	_capacity;
 private:
-	void	allocateFromRef(allocator_type& alloc, size_type n, const vector& rV);
-	void	allocateFromVal(allocator_type& alloc, size_type n, const value_type& val);
+	void	allocateFromRef(size_type n, const vector& rV);
+	void	allocateFromVal(size_type n, const value_type& val);
 	void	reserve_copy(iterator position, size_type newCapacity,  size_type n, const value_type& val);
 	template<typename InputIterator>
 	typename ft::enable_if< ft::is_inputable_iterator<InputIterator>::value, void>::type
@@ -125,7 +126,7 @@ vector<T, Alloc>::vector(
 {
 	try
 	{
-		allocateFromVal(_alloc, n, val);
+		allocateFromVal(n, val);
 	}
 	catch(std::exception& e)
 	{
@@ -141,7 +142,7 @@ vector<T, Alloc>::vector(
 {
 	try
 	{
-		allocateFromRef(_alloc, rV.size(), rV);
+		allocateFromRef(rV.size(), rV);
 	}
 	catch(std::exception& e)
 	{
@@ -175,13 +176,12 @@ vector<T, Alloc>::~vector()
 template<typename T, typename Alloc>
 void 
 vector<T, Alloc>::allocateFromRef(
-	allocator_type& alloc,
 	size_type n, 
 	const vector& rV
 ){
-	_pElem = alloc.allocate(n);
+	_pElem = _alloc.allocate(n);
 	for (size_type idx = 0; idx < n; ++idx)
-		alloc.construct(&(_pElem[idx]), rV[idx]);
+		_alloc.construct(&(_pElem[idx]), rV[idx]);
 	_elemCnt = n;
 	_capacity = n;
 }
@@ -189,13 +189,12 @@ vector<T, Alloc>::allocateFromRef(
 template<typename T, typename Alloc>
 void 
 vector<T, Alloc>::allocateFromVal(
-	allocator_type& alloc,
 	size_type n, 
 	const value_type& val
 ){
-	_pElem = alloc.allocate(n);
+	_pElem = _alloc.allocate(n);
 	for (size_type idx = 0; idx < n; ++idx)
-		alloc.construct(&(_pElem[idx]), val);
+		_alloc.construct(&(_pElem[idx]), val);
 	_elemCnt = n;
 	_capacity = n;
 }
@@ -212,7 +211,7 @@ vector<T, Alloc>& vector<T, Alloc>::operator=(
 	
 	try
 	{
-		allocatedFromRef(rV.size(), rV);
+		allocateFromRef(rV.size(), rV);
 	}
 	catch(std::exception& e)
 	{
@@ -230,7 +229,7 @@ typename vector<T, Alloc>::size_type vector<T, Alloc>::capacity() const
 template<typename T, typename Alloc>
 typename vector<T, Alloc>::size_type vector<T, Alloc>::max_size() const
 {
-	return (std::numeric_limits<vector<T, Alloc>::size_type>::max() / sizeof(value_type));
+	return (std::numeric_limits<difference_type>::max()/ sizeof(value_type));
 }
 
 template<typename T, typename Alloc>
@@ -250,7 +249,7 @@ template<typename T, typename Alloc>
 typename vector<T, Alloc>::const_iterator
 vector<T, Alloc>::begin() const
 {
-	return (iterator(_pElem));
+	return (const_iterator(_pElem));
 }
 
 template<typename T, typename Alloc>
@@ -267,8 +266,8 @@ typename vector<T, Alloc>::const_iterator
 vector<T, Alloc>::end() const
 {
 	if (_elemCnt == 0)
-		return (iterator(_pElem));
-	return (iterator(_pElem + sizeof(value_type)));
+		return (const_iterator(_pElem));
+	return (const_iterator(_pElem + _elemCnt));
 }
 
 template<typename T, typename Alloc>
@@ -333,7 +332,7 @@ vector<T, Alloc>::resize(size_type n, value_type val)
 	if (n < _elemCnt)
 	{
 		for(size_type idx = n; idx < _elemCnt; ++idx)
-			_alloc.destory(&(_pElem[idx]));
+			_alloc.destroy(&(_pElem[idx]));
 		_elemCnt = n;
 	}
 	else if (n > _capacity)
@@ -459,8 +458,6 @@ vector<T, Alloc>::assign(InputIterator first, InputIterator last)
 	size_type dist = std::distance(first, last);
 	if (dist == 0)
 		return ;
-	if (_elemCnt == 0)
-		return ;
 	if (dist > _capacity)
 	{
 		T* tmp = _alloc.allocate(dist);
@@ -480,6 +477,8 @@ vector<T, Alloc>::assign(InputIterator first, InputIterator last)
 		_capacity = dist;
 		return ;
 	}
+	if (_elemCnt == 0)
+		return ;
 	for (size_type idx = 0; idx < _elemCnt; ++idx)
 		_alloc.destroy(&_pElem[idx]);
 	_elemCnt = 0;
@@ -548,11 +547,11 @@ vector<T, Alloc>::reserve_copy_iter(iterator position, size_type newCapacity, In
 	if (newCapacity > max_size())
 		throw std::length_error("overed length alloc");
 	T* tmp = _alloc.allocate(newCapacity);
-	difference_type dist = std::distance(position, end());
+	difference_type dist = std::distance(begin(), position);
 	try{
-		std::uninitialized_copy(first, last, tmp + std::distance(begin(), position));
+		std::uninitialized_copy(first, last, tmp + dist);
 		std::uninitialized_copy(begin(), position, tmp);
-		std::uninitialized_copy(position, end(), tmp + std::distance(begin(), position) + dist);
+		std::uninitialized_copy(position, end(), tmp + dist + std::distance(first, last));
 	}
 	catch(std::exception& e)
 	{
@@ -562,7 +561,7 @@ vector<T, Alloc>::reserve_copy_iter(iterator position, size_type newCapacity, In
 		_alloc.destroy(&_pElem[idx]);
 	_alloc.deallocate(_pElem, _capacity);
 	_pElem = tmp;
-	_elemCnt += dist;
+	_elemCnt += std::distance(first, last);
 	_capacity = newCapacity;
 }
 
@@ -644,6 +643,8 @@ typename ft::enable_if< ft::is_inputable_iterator<InputIterator>::value, void>::
 	if (_elemCnt + dist >= _capacity)
 	{
 		size_type	_tmpCap = _capacity;
+		if (_tmpCap == 0)
+			_tmpCap = 1;
 		size_type	_target = _capacity + dist;
 		while (_tmpCap <= _target)
 			_tmpCap <<= 1;
@@ -716,7 +717,7 @@ void
 vector<T, Alloc>::clear()
 {
 	for(size_type idx = 0; idx < _elemCnt; ++idx)
-		_alloc.distroy(&(_pElem[idx]));
+		_alloc.destroy(&(_pElem[idx]));
 	_elemCnt = 0;
 }
 
@@ -731,13 +732,15 @@ vector<T, Alloc>::get_allocator() const
 template <typename T, typename Alloc>
 	bool	operator==(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs)
 {
-	return (ft::equal(lhs.begin(), lhs.end(), rhs.begin()));
+	if (lhs.size() > rhs.size())
+		return (ft::equal(lhs.begin(), lhs.end(), rhs.begin()));
+	return (ft::equal(rhs.begin(), rhs.end(), lhs.begin()));
 }
 
 template <typename T, typename Alloc>
 	bool	operator!=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs)
 {
-	return (!ft::equal(lhs.begin(), lhs.end(), rhs.begin()));
+	return (!operator==(lhs, rhs));
 }
 
 template <typename T, typename Alloc>
@@ -749,19 +752,19 @@ template <typename T, typename Alloc>
 template <typename T, typename Alloc>
 	bool	operator>(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs)
 {
-	return (ft::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), bigger<T>()));
+	return (!operator<=(lhs, rhs));
 }
 
 template <typename T, typename Alloc>
 	bool	operator<=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs)
 {
-	return (!ft::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), bigger<T>()));
+	return (operator<(lhs, rhs) || operator==(lhs, rhs));
 }
 
 template <typename T, typename Alloc>
 	bool	operator>=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs)
 {
-	return (!ft::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end()));
+	return (!operator<(lhs, rhs));
 }
 
 template <typename T, typename Alloc>

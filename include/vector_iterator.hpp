@@ -5,18 +5,19 @@
 
 template <typename T>
 class Vector_iterator : public std::iterator<std::random_access_iterator_tag,
-	T>
+	T, std::ptrdiff_t, T*, T&>
 {
 private:
 	T* _p;
 public:
 	typedef typename std::iterator<std::random_access_iterator_tag, T>::difference_type difference_type;
+	typedef	Vector_iterator<T>		iterator_type;
 	Vector_iterator();
 	Vector_iterator(T* p);
 	Vector_iterator(const Vector_iterator& rV);
 	Vector_iterator&	operator=(const Vector_iterator& rV);
 	Vector_iterator&	operator++();
-	Vector_iterator		operator++(int);
+	Vector_iterator		operator++(int); 
 	Vector_iterator&	operator--();
 	Vector_iterator		operator--(int);
 	bool				operator==(const Vector_iterator& rV) const;
@@ -30,23 +31,23 @@ public:
 	difference_type		operator-(const Vector_iterator& rV) const;
 	T&					operator[](difference_type n);
 	const T&			operator[](difference_type n) const;
-	bool				operator<(const Vector_iterator& rV);
-	bool				operator>(const Vector_iterator& rV);
-	bool				operator>=(const Vector_iterator& rV);
-	bool				operator<=(const Vector_iterator& rV);
+	bool				operator<(const Vector_iterator& rV) const;
+	bool				operator>(const Vector_iterator& rV) const;
+	bool				operator>=(const Vector_iterator& rV) const;
+	bool				operator<=(const Vector_iterator& rV) const;
+	T*					operator->() const;
 };
 
 template <typename T>
 Vector_iterator<T>::Vector_iterator() : _p(0)
-{};
+{}
 
 template <typename T>
 Vector_iterator<T>::Vector_iterator(T* p) : _p(p)
-{};
+{}
 
 template <typename T>
-Vector_iterator<T>::Vector_iterator(const Vector_iterator& rV) : _p(rV._p) {};
-
+Vector_iterator<T>::Vector_iterator(const Vector_iterator& rV) : _p(rV._p) {}
 
 template <typename T>
 Vector_iterator<T>& Vector_iterator<T>::operator=(const Vector_iterator& rV)
@@ -56,9 +57,8 @@ Vector_iterator<T>& Vector_iterator<T>::operator=(const Vector_iterator& rV)
 	_p = rV._p;
 	return (*this);
 }
-
-
-	template <typename T>
+	
+template <typename T>
 Vector_iterator<T>& Vector_iterator<T>::operator++()
 {
 	_p++;
@@ -161,30 +161,46 @@ Vector_iterator<T>::operator[](difference_type n) const
 
 template <typename T>
 bool
-Vector_iterator<T>::operator<(const Vector_iterator& rV)
+Vector_iterator<T>::operator<(const Vector_iterator& rV) const
 {
 	return (_p < rV._p);
 }
 	
-
 template <typename T>
 bool
-Vector_iterator<T>::operator>(const Vector_iterator& rV)
+Vector_iterator<T>::operator>(const Vector_iterator& rV) const
 {
 	return (_p > rV._p);
 }
 	
 template <typename T>
 bool
-Vector_iterator<T>::operator>=(const Vector_iterator& rV)
+Vector_iterator<T>::operator>=(const Vector_iterator& rV) const
 {
 	return (_p >= rV._p);
 }
 	
 template <typename T>
 bool
-Vector_iterator<T>::operator<=(const Vector_iterator& rV)
+Vector_iterator<T>::operator<=(const Vector_iterator& rV) const
 {
 	return (_p <= rV._p);
 }
+
+template <typename T>
+T*
+Vector_iterator<T>::operator->() const
+{
+	return (_p);
+}
+
+/*non member function*/
+template <typename T>
+Vector_iterator<T>
+operator+(typename Vector_iterator<T>::difference_type n, Vector_iterator<T> it)
+{
+	return (it + n);
+}
+
+
 #endif

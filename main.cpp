@@ -119,7 +119,20 @@ for(ft::vector<int>::iterator it = tmp2.begin();  it != tmp2.end(); ++it)
   until = myvector.rend();
 
   std::cout << "myvector has " << (until-from) << " elements.\n";
+	
+  ft::vector<int>::iterator it = tmp.begin();
+  ft::vector<int>::iterator it2 = tmp.begin();
 
+  if (it == it2)
+	  std::cout << "true" << std::endl;
+  else
+	  std::cout << "false" << std::endl;
+
+
+  it = 4 + it;
+ // ft::vector<const int> cv;
+
+ // cv.push_back(1);
 	//int	bb[] = {1,2,3,4,5};
 
 	//a.assign(bb, bb + 2);
