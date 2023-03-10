@@ -6,7 +6,7 @@
 #include <string>
 #include <iostream>
 #include <limits>
-#include <stdexcept>
+#include <exception>
 #include "vector_iterator.hpp"
 #include "enable_if.hpp"
 #include "is_iterator.hpp"
@@ -208,13 +208,13 @@ vector<T, Alloc>& vector<T, Alloc>::operator=(
 	for(size_type idx = 0; idx < _elemCnt; ++idx)
 		_alloc.destroy(&(_pElem[idx]));
 	_alloc.deallocate(_pElem, _elemCnt);
-	
 	try
 	{
 		allocateFromRef(rV.size(), rV);
 	}
 	catch(std::exception& e)
 	{
+		std::cout << e.what() <<std::endl;
 		throw ;
 	}
 	return (*this);
@@ -732,7 +732,14 @@ vector<T, Alloc>::get_allocator() const
 template <typename T, typename Alloc>
 	bool	operator==(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs)
 {
-	if (lhs.size() > rhs.size())
+	typename ft::vector<T, Alloc>::size_type	lhs_size = lhs.size();
+	typename ft::vector<T, Alloc>::size_type	rhs_size = rhs.size();
+
+	if (lhs_size != rhs_size)
+		return (false);
+	if ((lhs_size == 0) && (rhs_size == 0))
+		return (true);
+	if (lhs_size > rhs_size)
 		return (ft::equal(lhs.begin(), lhs.end(), rhs.begin()));
 	return (ft::equal(rhs.begin(), rhs.end(), lhs.begin()));
 }

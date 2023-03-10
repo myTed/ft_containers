@@ -4,6 +4,7 @@
 #include <vector>
 #include "is_iterator.hpp"
 #include "reverse_iterator.hpp"
+#include <unistd.h>
 
 int	main(void)
 {
@@ -130,6 +131,8 @@ for(ft::vector<int>::iterator it = tmp2.begin();  it != tmp2.end(); ++it)
 
 
   it = 4 + it;
+	
+  sleep(1000);
  // ft::vector<const int> cv;
 
  // cv.push_back(1);
