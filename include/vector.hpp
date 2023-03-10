@@ -44,7 +44,6 @@ private:
 	template<typename InputIterator>
 	typename ft::enable_if< ft::is_inputable_iterator<InputIterator>::value, void>::type
 	reserve_copy_iter(iterator position, size_type newCapacity, InputIterator first, InputIterator last);
-
 public:
 	/*constructor*/
 	explicit	vector(const allocator_type& alloc = allocator_type());
@@ -325,6 +324,7 @@ vector<T, Alloc>::reserve(size_type n)
 	_capacity = n;
 }
 
+
 template<typename T, typename Alloc>
 void
 vector<T, Alloc>::resize(size_type n, value_type val)
@@ -484,7 +484,6 @@ vector<T, Alloc>::assign(InputIterator first, InputIterator last)
 	_elemCnt = 0;
 	std::uninitialized_copy(first, last, _pElem);
 	_elemCnt = dist;
-	_capacity = dist;
 }
 
 template<typename T, typename Alloc>
@@ -572,6 +571,7 @@ vector<T, Alloc>::insert(iterator position, const value_type& val)
 {
 	if (_elemCnt >= _capacity)
 	{
+		difference_type dist = std::distance(begin(), position);
 		if (position == end())
 		{
 			reserve(_elemCnt * 2);
@@ -581,7 +581,7 @@ vector<T, Alloc>::insert(iterator position, const value_type& val)
 		{
 			reserve_copy(position, 2 * _elemCnt, 1, val);
 		}
-		return (iterator(position));
+		return (iterator(_pElem + dist));
 	}
 	if (position == end())
 	{
@@ -601,19 +601,11 @@ template<typename T, typename Alloc>
 void
 vector<T, Alloc>::insert(iterator position, size_type n, const value_type& val)
 {
+	if (n == 0)
+		return ;
 	if (_elemCnt + n >= _capacity)
 	{
-		size_type _tmpCap = _capacity;
-		size_type _target = _capacity + n;
-		while (_tmpCap <= _target)
-			_tmpCap <<= 1;
-		if (position == end())
-		{
-			reserve(_tmpCap);
-			std::uninitialized_fill_n(end(), n , val);
-			_elemCnt += n;
-			return ;
-		}
+		size_type _tmpCap = _elemCnt + n;
 		reserve_copy(position, _tmpCap, n, val);
 		return ;
 	}
@@ -643,17 +635,13 @@ typename ft::enable_if< ft::is_inputable_iterator<InputIterator>::value, void>::
 	if (_elemCnt + dist >= _capacity)
 	{
 		size_type	_tmpCap = _capacity;
-		if (_tmpCap == 0)
-			_tmpCap = 1;
 		size_type	_target = _capacity + dist;
-		while (_tmpCap <= _target)
-			_tmpCap <<= 1;
-		if (position == end())
+		if (_tmpCap == 0)
+			_tmpCap = _target;
+		else
 		{
-			reserve(_tmpCap);
-			std::uninitialized_copy(first, last, end());
-			_elemCnt += dist;
-			return ;
+			while (_tmpCap <= _target)
+				_tmpCap <<= 1;
 		}
 		reserve_copy_iter(position, _tmpCap, first, last);
 		return ;
