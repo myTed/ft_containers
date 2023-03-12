@@ -14,89 +14,87 @@ namespace ft
 		typedef T type;
 	};
 
-	template<typename T>
-	struct is_integral
+	template<typename T, T v>
+	struct integral_constant
 	{
-		static const bool value = false;
+		const T value = v;
+		operator T() {return v;}
 	};
+
+	template<typename T>
+	struct is_integral 
+	: public integral_constant<bool, false>
+	{};
 
 	template<>
 	struct is_integral<bool>
-	{
-		static const bool value = true;
-	};
-	/*	
+	 : public integral_constant<bool, true>
+	{};
+		
 	template<>
 	struct is_integral<char16_t>
-	{
-		static const bool value = true;
-	};
+	 : public integral_constant<bool, true>
+	{};
 
 	template<>
-	struct is_integral<char32_t>
-	{
-		static const bool value = true;
-	};
-	*/
+	struct is_integral<wchar_t>
+	 : public integral_constant<bool, true>
+	{};
+
+	template<>
+	struct is_integral<char>
+	 : public integral_constant<bool, true>
+	{};
+	
 	template<>
 	struct is_integral<signed char>
-	{
-		static const bool value = true;
-	};
+	 : public integral_constant<bool, true>
+	{};
 
 	template<>
 	struct is_integral<short int>
-	{
-		static const bool value = true;
-	};
+	 : public integral_constant<bool, true>
+	{};
 
 	template<>
 	struct is_integral<int>
-	{
-		static const bool value = true;
-	};
+	 : public integral_constant<bool, true>
+	{};
 
 	template<>
 	struct is_integral<long int>
-	{
-		static const bool value = true;
-	};
+	 : public integral_constant<bool, true>
+	{};
 
 	template<>
 	struct is_integral<long long int>
-	{
-		static const bool value = true;
-	};
+	 : public integral_constant<bool, true>
+	{};
 
 	template<>
 	struct is_integral<unsigned char>
-	{
-		static const bool value = true;
-	};
+	 : public integral_constant<bool, true>
+	{};
 
 	template<>
 	struct is_integral<unsigned short int>
-	{
-		static const bool value = true;
-	};
+	 : public integral_constant<bool, true>
+	{};
 
 	template<>
 	struct is_integral<unsigned int>
-	{
-		static const bool value = true;
-	};
+	 : public integral_constant<bool, true>
+	{};
 
 	template<>
 	struct is_integral<unsigned long int>
-	{
-		static const bool value = true;
-	};
+	 : public integral_constant<bool, true>
+	{};
 
 	template<>
 	struct is_integral<unsigned long long int>
-	{
-		static const bool value = true;
-	};
+	 : public integral_constant<bool, true>
+	{};
 }
 
 

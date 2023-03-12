@@ -11,7 +11,7 @@ private:
 	T* _p;
 public:
 	typedef typename std::iterator<std::random_access_iterator_tag, T>::difference_type difference_type;
-	typedef	Vector_iterator<T>		iterator_type;
+	typedef	T*	iterator_type;
 	Vector_iterator();
 	Vector_iterator(T* p);
 	Vector_iterator(const Vector_iterator& rV);
