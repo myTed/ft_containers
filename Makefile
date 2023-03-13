@@ -1,11 +1,21 @@
 CXX=g++
-
+OS := $(shell uname)
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g
-CXXFLAGS += -I ./include
+CXXFLAGS += -I ./include/vector
+CXXFLAGS += -I ./include/stack
+CXXFLAGS += -I ./include/map
+CXXFLAGS += -I ./include/set
+
+ifeq ($(OS),Linux)
+	CXXFLAGS += -DLINUX
+endif
+
 
 SRCS=main.cpp
 OBJECTS=$(patsubst %.cpp, %.o, $(SRCS))
 NAME=ft_container
+
+OS := $(shell uname)
 
 all:$(NAME)
 

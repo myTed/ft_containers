@@ -164,13 +164,13 @@ vector<T, Alloc>::allocateFromRef(
 	size_type n, 
 	const vector& rV
 ){
-	if (n == 0)
+	if ((n == 0) || (rV._capacity == 0))
 		return ;
-	_pElem = _alloc.allocate(n);
+	_pElem = _alloc.allocate(rV._capacity);
 	for (size_type idx = 0; idx < n; ++idx)
 		_alloc.construct(&(_pElem[idx]), rV[idx]);
 	_elemCnt = n;
-	_capacity = n;
+	_capacity = rV._capacity;
 }
 
 template<typename T, typename Alloc>
@@ -194,9 +194,12 @@ vector<T, Alloc>& vector<T, Alloc>::operator=(
 {
 	if (this == &rV)
 		return (*this);
-	for(size_type idx = 0; idx < _elemCnt; ++idx)
-		_alloc.destroy(&(_pElem[idx]));
-	_alloc.deallocate(_pElem, _elemCnt);
+	if (_elemCnt != 0)
+	{
+		for(size_type idx = 0; idx < _elemCnt; ++idx)
+			_alloc.destroy(&(_pElem[idx]));
+		_alloc.deallocate(_pElem, _elemCnt);
+	}
 	try
 	{
 		allocateFromRef(rV.size(), rV);
@@ -327,7 +330,10 @@ vector<T, Alloc>::resize(size_type n, value_type val)
 	}
 	else if (n > _capacity)
 	{
-		reserve(_capacity * 2);
+		size_type tmpCap = _capacity;
+		while (tmpCap < n)
+			tmpCap <<= 1;
+		reserve(tmpCap);
 		for(size_type idx = _elemCnt; idx < n; ++idx)
 			_alloc.construct(&(_pElem[idx]), val);
 		_elemCnt = n;
@@ -664,7 +670,8 @@ vector<T, Alloc>::erase(iterator position)
 		return (iterator(end()));
 	}
 	_alloc.destroy(&(*position));
-	std::memmove(&(*position), (&(*position) + 1), dist * sizeof(value_type));
+	std::uninitialized_copy(position + 1, end(), position); 
+	//std::memmove(position.operator->(), (position + 1).operator->(), (dist * sizeof(value_type)));
 	--_elemCnt;
 	return (iterator(position));
 }
@@ -674,11 +681,15 @@ typename vector<T, Alloc>::iterator
 vector<T, Alloc>::erase(iterator first, iterator last)
 {
 	size_type dist = std::distance(first, last);
-	size_type move_cnt = std::distance(last, end());
-	T* startAddr = &(*first);
-	for(size_type idx = 0; idx < dist; ++idx, ++startAddr)
-		_alloc.destroy(startAddr);
-	std::memmove(&(*first), &(*last), move_cnt * sizeof(value_type));
+	//size_type move_cnt = std::distance(last, end());
+	//T* startAddr = &(*first);
+	for(size_type idx = 0; idx < dist; ++idx)
+	{
+		//_alloc.destroy(&(startAddr[idx]));
+		_alloc.destroy(&(*(first + idx)));
+	}
+	std::uninitialized_copy(last, end(), first);
+	//std::memmove(&(*first), &(*last), move_cnt * sizeof(value_type));
 	_elemCnt -= dist;
 	return (first);
 }

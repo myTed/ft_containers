@@ -5,6 +5,7 @@
 #include "is_iterator.hpp"
 #include "reverse_iterator.hpp"
 #include <unistd.h>
+#include "stack.hpp"
 
 int	main(void)
 {
@@ -132,13 +133,37 @@ for(ft::vector<int>::iterator it = tmp2.begin();  it != tmp2.end(); ++it)
 
   it = 4 + it;
 	
-  sleep(1000);
- // ft::vector<const int> cv;
+	ft::vector<int> vc4;
+
+	ft::vector<int> vc5;
+	vc5.push_back(1);
+	vc5.push_back(2);
+
+	vc4 = vc5;
+
+  // ft::vector<const int> cv;
 
  // cv.push_back(1);
 	//int	bb[] = {1,2,3,4,5};
 
 	//a.assign(bb, bb + 2);
+
+
+
+	///stack test
+
+	 ft::stack<int> mystack;
+
+  for (int i=0; i<5; ++i) mystack.push(i);
+
+  std::cout << "Popping out elements...";
+  while (!mystack.empty())
+  {
+     std::cout << ' ' << mystack.top();
+     mystack.pop();
+  }
+  
+  std::cout << '\n';
 	return (0);
 
 }

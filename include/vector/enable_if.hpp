@@ -17,7 +17,7 @@ namespace ft
 	template<typename T, T v>
 	struct integral_constant
 	{
-		const T value = v;
+		static const T value = v;
 		operator T() {return v;}
 	};
 
@@ -30,11 +30,15 @@ namespace ft
 	struct is_integral<bool>
 	 : public integral_constant<bool, true>
 	{};
-		
+	
+#ifndef LINUX
+	/*
 	template<>
 	struct is_integral<char16_t>
 	 : public integral_constant<bool, true>
 	{};
+	*/
+#endif
 
 	template<>
 	struct is_integral<wchar_t>
@@ -75,12 +79,12 @@ namespace ft
 	struct is_integral<unsigned char>
 	 : public integral_constant<bool, true>
 	{};
-
+	/*
 	template<>
 	struct is_integral<unsigned short int>
 	 : public integral_constant<bool, true>
 	{};
-
+	*/
 	template<>
 	struct is_integral<unsigned int>
 	 : public integral_constant<bool, true>
